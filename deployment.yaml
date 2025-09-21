@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: capstone-app
+  namespace: default
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: capstone-app
+  template:
+    metadata:
+      labels:
+        app: capstone-app
+    spec:
+      containers:
+      - name: capstone-app
+        image: abdellaabdella1/capstone-app:latest
+        ports:
+        - containerPort: 80
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: capstone-service
+spec:
+  selector:
+    app: capstone-app
+  ports:
+  - port: 80
+    targetPort: 80
+  type: LoadBalancer
