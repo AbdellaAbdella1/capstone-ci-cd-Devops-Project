@@ -96,6 +96,15 @@ capstone-ci-cd-Devops-Project/
 - **Prometheus** - Metrics collection and alerting
 - **Grafana** - Visualization and dashboards
 
+<img width="926" height="442" alt="grafan 2" src="https://github.com/user-attachments/assets/25521acb-1b35-4b73-aa6d-d05938637d5a" />
+
+<img width="943" height="476" alt="Grafana 3" src="https://github.com/user-attachments/assets/ffac917d-3215-48f3-9e91-482a2b7c5168" />
+
+<img width="953" height="508" alt="Grafana 4" src="https://github.com/user-attachments/assets/30f11297-df64-479d-a1c1-483d307510ef" />
+
+<img width="955" height="482" alt="grafana 1" src="https://github.com/user-attachments/assets/a4565759-bfc1-46fc-af91-8786b52c3556" />
+
+
 ### Security
 - **Non-root containers** - Security best practices
 - **Kubernetes Security Context** - Pod security policies
@@ -248,5 +257,6 @@ https://img.shields.io/github/stars/AbdellaAbdella1/capstone-ci-cd-Devops-Projec
 Built with ❤️ using modern DevOps practices
 
 </div> ```
+
 
 
