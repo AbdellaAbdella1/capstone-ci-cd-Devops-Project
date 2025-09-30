@@ -1,0 +1,144 @@
+# Get available AZs
+data "aws_availability_zones" "available" {}
+
+# Create a new VPC for EKS (separate from your existing Jenkins VPC)
+module "vpc" {
+  source  = "terraform-aws-modules/vpc/aws"
+  version = "~> 5.0"
+
+  name = "${var.cluster_name}-vpc"
+  cidr = var.vpc_cidr
+
+  azs             = slice(data.aws_availability_zones.available.names, 0, 2)
+  private_subnets = ["10.1.1.0/24", "10.1.2.0/24"]
+  public_subnets  = ["10.1.101.0/24", "10.1.102.0/24"]
+
+  enable_nat_gateway   = true
+  single_nat_gateway   = true
+  enable_dns_hostnames = true
+
+  public_subnet_tags = {
+    "kubernetes.io/role/elb" = 1
+  }
+
+  private_subnet_tags = {
+    "kubernetes.io/role/internal-elb" = 1
+    "kubernetes.io/cluster/${var.cluster_name}" = "owned"
+  }
+}
+
+# Create EKS cluster
+module "eks" {
+  source  = "terraform-aws-modules/eks/aws"
+  version = "~> 19.0"
+
+  cluster_name    = var.cluster_name
+  cluster_version = "1.28"
+
+  vpc_id                         = module.vpc.vpc_id
+  subnet_ids                     = module.vpc.private_subnets
+  cluster_endpoint_public_access = true
+
+  eks_managed_node_groups = {
+    main = {
+      name           = "main-node-group"
+      instance_types = ["t3.medium"]
+
+      min_size     = 1
+      max_size     = 3
+      desired_size = 2
+
+      capacity_type = "ON_DEMAND"
+    }
+  }
+
+  tags = {
+    Environment = var.environment
+    Project     = "capstone"
+  }
+}
+
+# Security group for additional access to EKS cluster
+resource "aws_security_group_rule" "cluster_ingress" {
+  description       = "Allow access to cluster"
+  from_port         = 443
+  to_port           = 443
+  protocol          = "tcp"
+  cidr_blocks       = ["0.0.0.0/0"]
+  security_group_id = module.eks.cluster_security_group_id
+  type              = "ingress"
+}
+
+# Security Group for Kubernetes worker nodes
+resource "aws_security_group" "k8s_workers_sg" {
+  name        = "${var.cluster_name}-k8s-workers"
+  description = "Security group for Kubernetes worker nodes"
+  vpc_id      = module.vpc.vpc_id
+
+  ingress {
+    description = "SSH"
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    description = "HTTP"
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    description = "NodePort range"
+    from_port   = 30000
+    to_port     = 32767
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name = "${var.cluster_name}-k8s-workers"
+  }
+}
+
+# Data source for Ubuntu AMI
+data "aws_ami" "ubuntu" {
+  most_recent = true
+  owners      = ["099720109477"]
+
+  filter {
+    name   = "name"
+    values = ["ubuntu/images/hvm-ssd/ubuntu-22.04-*-amd64-server-*"]
+  }
+
+  filter {
+    name   = "virtualization-type"
+    values = ["hvm"]
+  }
+
+  filter {
+    name   = "architecture"
+    values = ["x86_64"]
+  }
+}
+Create
+a
+modified
+main.tf
+that
+works
+with
+your
+existing
+Jenkins
+instance

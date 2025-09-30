@@ -1,0 +1,63 @@
+---
+- name: Deploy microservice application
+  hosts: k8s_cluster
+  tasks:
+    - name: Build Docker image
+      command: docker build -t microservice-app:latest ./app
+      args:
+        chdir: "{{ playbook_dir }}/../.."
+
+    - name: Load image into Minikube
+      command: minikube image load microservice-app:latest
+
+    - name: Deploy application namespace
+      k8s:
+        state: present
+        src: "{{ playbook_dir }}/../../k8s/namespace.yaml"
+
+    - name: Deploy application ConfigMap
+      k8s:
+        state: present
+        src: "{{ playbook_dir }}/../../k8s/configmap.yaml"
+
+    - name: Deploy application Secrets
+      k8s:
+        state: present
+        src: "{{ playbook_dir }}/../../k8s/secret.yaml"
+
+    - name: Deploy application Deployment
+      k8s:
+        state: present
+        src: "{{ playbook_dir }}/../../k8s/deployment.yaml"
+
+    - name: Deploy application Service
+      k8s:
+        state: present
+        src: "{{ playbook_dir }}/../../k8s/service.yaml"
+
+    - name: Wait for application pods to be ready
+      k8s_info:
+        kind: Pod
+        namespace: "{{ namespace }}"
+        label_selectors:
+          - app=microservice
+      register: app_pods
+      until: app_pods.resources | selectattr('status.phase', 'equalto', 'Running') | list | length >= 1
+      retries: 10
+      delay: 10
+
+    - name: Verify application health
+      uri:
+        url: "http://$(minikube ip):{{ app_port }}/health"
+        method: GET
+        status_code: 200
+      register: health_check
+
+    - name: Display deployment status
+      command: kubectl get all -n {{ namespace }}
+      register: deployment_status
+      changed_when: false
+
+    - name: Show deployment info
+      debug:
+        msg: "{{ deployment_status.stdout }}"

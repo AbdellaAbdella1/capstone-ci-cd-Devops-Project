@@ -1,0 +1,42 @@
+---
+- name: Complete Capstone Project Deployment
+  hosts: local
+  vars:
+    minikube_ip: "{{ ansible_default_ipv4.address }}"
+  
+  tasks:
+    - name: Include Docker installation
+      include_tasks: install-docker.yml
+
+    - name: Include Kubernetes installation
+      include_tasks: install-k8s.yml
+
+    - name: Include application deployment
+      include_tasks: setup-app.yml
+
+    - name: Include monitoring deployment
+      include_tasks: install-monitoring.yml
+
+    - name: Final verification
+      command: kubectl get pods -A
+      register: final_status
+      changed_when: false
+
+    - name: Display final status
+      debug:
+        msg: "{{ final_status.stdout }}"
+
+    - name: Show access information
+      debug:
+        msg: |
+          í¾‰ DEPLOYMENT COMPLETE!
+          
+          í³Š ACCESS URLs:
+          Microservice: http://{{ minikube_ip }}:{{ app_port }}
+          Health Check: http://{{ minikube_ip }}:{{ app_port }}/health
+          Prometheus:   http://{{ minikube_ip }}:{{ prometheus_port }}
+          Grafana:      http://{{ minikube_ip }}:{{ grafana_port }} (admin/admin123)
+
+          í´§ Quick Tests:
+          curl http://{{ minikube_ip }}:{{ app_port }}/health
+          curl http://{{ minikube_ip }}:{{ prometheus_port }}/targets

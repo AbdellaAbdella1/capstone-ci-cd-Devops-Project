@@ -1,0 +1,51 @@
+---
+- name: Install Kubernetes tools (Minikube and kubectl)
+  hosts: k8s_cluster
+  become: yes
+  tasks:
+    - name: Install kubectl
+      shell: |
+        curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+        sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
+        rm kubectl
+
+    - name: Install Minikube
+      shell: |
+        curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
+        sudo install minikube-linux-amd64 /usr/local/bin/minikube
+        rm minikube-linux-amd64
+
+    - name: Start Minikube cluster
+      command: minikube start --driver=docker
+      environment:
+        CHANGE_MINIKUBE_NONE_USER: true
+      become: yes
+      become_user: "{{ ansible_user }}"
+
+    - name: Verify kubectl connectivity
+      command: kubectl cluster-info
+      register: cluster_info
+      changed_when: false
+
+    - name: Display cluster info
+      debug:
+        msg: "{{ cluster_info.stdout }}"
+
+    - name: Create namespaces
+      k8s:
+        name: "{{ item }}"
+        api_version: v1
+        kind: Namespace
+        state: present
+      loop:
+        - "{{ namespace }}"
+        - "{{ monitoring_namespace }}"
+
+    - name: Verify namespaces
+      command: kubectl get namespaces
+      register: namespaces
+      changed_when: false
+
+    - name: Display namespaces
+      debug:
+        msg: "{{ namespaces.stdout }}"

@@ -1,0 +1,31 @@
+#!/bin/bash
+echo "ÌæØ Terraform Configuration Demo"
+echo "================================"
+
+echo "Ì≥Å Your Terraform files are set up for AWS EKS deployment."
+echo "Ì≥ã File structure:"
+echo "infra/terraform/"
+echo "‚îú‚îÄ‚îÄ providers.tf    - AWS and Kubernetes providers"
+echo "‚îú‚îÄ‚îÄ variables.tf    - Configurable variables"
+echo "‚îú‚îÄ‚îÄ main.tf         - EKS cluster and VPC configuration"
+echo "‚îú‚îÄ‚îÄ outputs.tf      - Output values after deployment"
+echo "‚îî‚îÄ‚îÄ versions.tf     - Terraform version constraints"
+
+echo ""
+echo "Ì¥ê Requirements for AWS deployment:"
+echo "‚úÖ AWS CLI installed"
+echo "‚úÖ AWS credentials configured"
+echo "‚úÖ Terraform installed"
+
+echo ""
+echo "Ì≤° For now, since you have Minikube working perfectly,"
+echo "   you can demonstrate the local deployment instead of AWS."
+echo ""
+echo "Ìºê Your current Minikube deployment:"
+kubectl get pods -n microservices 2>/dev/null || echo "Minikube not running"
+
+echo ""
+echo "Ì∫Ä To try Terraform with AWS later:"
+echo "1. Run: ./scripts/terraform-init.sh"
+echo "2. Run: cd infra/terraform && terraform plan"
+echo "3. Run: terraform apply (‚ö†Ô∏è This creates real AWS resources)"

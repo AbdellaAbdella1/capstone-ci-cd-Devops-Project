@@ -1,0 +1,23 @@
+FROM ubuntu:20.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install curl, ca-certificates, AND xz-utils for tar.xz extraction
+RUN apt-get update && apt-get install -y curl ca-certificates xz-utils
+
+# Download and install Node.js directly
+RUN curl -fsSL https://nodejs.org/dist/v18.18.0/node-v18.18.0-linux-x64.tar.xz | \
+    tar -xJ -C /usr/local --strip-components=1
+
+WORKDIR /app
+
+# Copy package files from the app directory
+COPY ./app/package*.json ./
+
+RUN npm install
+
+# Copy the rest of the application code from app directory
+COPY ./app/ ./
+
+EXPOSE 3000
+CMD ["npm", "start"]

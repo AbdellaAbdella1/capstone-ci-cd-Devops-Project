@@ -1,0 +1,62 @@
+---
+- name: Deploy monitoring stack (Prometheus + Grafana)
+  hosts: monitoring
+  tasks:
+    - name: Create monitoring namespace
+      k8s:
+        name: "{{ monitoring_namespace }}"
+        api_version: v1
+        kind: Namespace
+        state: present
+
+    - name: Deploy Prometheus ConfigMap
+      k8s:
+        state: present
+        src: "{{ playbook_dir }}/../../monitoring/prometheus/config-map.yaml"
+
+    - name: Deploy Prometheus Deployment
+      k8s:
+        state: present
+        src: "{{ playbook_dir }}/../../monitoring/prometheus/deployment.yaml"
+
+    - name: Deploy Prometheus Service
+      k8s:
+        state: present
+        src: "{{ playbook_dir }}/../../monitoring/prometheus/service.yaml"
+
+    - name: Deploy Grafana ConfigMap
+      k8s:
+        state: present
+        src: "{{ playbook_dir }}/../../monitoring/grafana/config-map.yaml"
+
+    - name: Deploy Grafana Deployment
+      k8s:
+        state: present
+        src: "{{ playbook_dir }}/../../monitoring/grafana/deployment.yaml"
+
+    - name: Deploy Grafana Service
+      k8s:
+        state: present
+        src: "{{ playbook_dir }}/../../monitoring/grafana/service.yaml"
+
+    - name: Wait for monitoring pods to be ready
+      k8s_info:
+        kind: Pod
+        namespace: "{{ monitoring_namespace }}"
+        label_selectors:
+          - app in (prometheus, grafana)
+      register: monitoring_pods
+      until: monitoring_pods.resources | selectattr('status.phase', 'equalto', 'Running') | list | length == 2
+      retries: 10
+      delay: 10
+
+    - name: Display monitoring services
+      command: kubectl get svc -n {{ monitoring_namespace }}
+      register: monitoring_services
+      changed_when: false
+
+    - name: Show monitoring access URLs
+      debug:
+        msg: |
+          Prometheus: http://$(minikube ip):{{ prometheus_port }}
+          Grafana: http://$(minikube ip):{{ grafana_port }} (admin/admin123)

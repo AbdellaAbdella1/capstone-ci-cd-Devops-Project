@@ -1,0 +1,69 @@
+pipeline {
+    agent any
+
+    environment {
+        DOCKER_REGISTRY = 'abdellaabdella1'  
+        APP_NAME = 'capstone-app'
+        K8S_NAMESPACE = 'default'
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+
+        stage('Verify Files') {
+            steps {
+                sh 'ls -la'
+                sh 'echo "Dockerfile exists:" && test -f Dockerfile && echo "✅" || echo "❌"'
+                sh 'echo "deployment.yaml exists:" && test -f deployment.yaml && echo "✅" || echo "❌"'
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                script {
+                    // Build using the Dockerfile in root directory
+                    docker.build("${DOCKER_REGISTRY}/${APP_NAME}:${env.BUILD_ID}")
+                }
+            }
+        }
+
+        stage('Push to DockerHub') {
+            steps {
+                script {
+                    docker.withRegistry('https://registry.hub.docker.com', 'dockerhub-credentials') {
+                        docker.image("${DOCKER_REGISTRY}/${APP_NAME}:${env.BUILD_ID}").push()
+                        // Also push as latest
+                        docker.image("${DOCKER_REGISTRY}/${APP_NAME}:${env.BUILD_ID}").push('latest')
+                    }
+                }
+            }
+        }
+
+        stage('Deploy to Kubernetes') {
+            steps {
+                script {
+                    // Deploy using your existing deployment.yaml
+                    sh "kubectl apply -f deployment.yaml"
+                    sh "kubectl rollout status deployment/capstone-app -n ${K8S_NAMESPACE} --timeout=300s || true"
+                    sh "kubectl get pods -n ${K8S_NAMESPACE}"
+                }
+            }
+        }
+    }
+
+    post {
+        always {
+            echo "🚀 Pipeline execution completed for build ${env.BUILD_ID}"
+        }
+        success {
+            echo "✅ Pipeline succeeded! Image: ${DOCKER_REGISTRY}/${APP_NAME}:${env.BUILD_ID}"
+        }
+        failure {
+            echo "❌ Pipeline failed on build ${env.BUILD_ID}"
+        }
+    }
+}
