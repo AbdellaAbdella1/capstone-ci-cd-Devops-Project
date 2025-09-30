@@ -1,4 +1,8 @@
-# 🚀 OESON Capstone - End-to-End CI/CD on Kubernetes
+<img width="800" alt="Architecture Diagram" src="https://github.com/user-attachments/assets/f0e4a0b0-e826-40e9-a043-1bb99109db68" />
+
+
+
+# 🚀 DevOps Project OESON Capstone - End-to-End CI/CD on Kubernetes
 
 ![GitHub last commit](https://img.shields.io/github/last-commit/AbdellaAbdella1/capstone-ci-cd-Devops-Project)
 ![GitHub code size](https://img.shields.io/github/languages/code-size/AbdellaAbdella1/capstone-ci-cd-Devops-Project)
@@ -244,4 +248,5 @@ https://img.shields.io/github/stars/AbdellaAbdella1/capstone-ci-cd-Devops-Projec
 Built with ❤️ using modern DevOps practices
 
 </div> ```
+
 
